@@ -6,9 +6,25 @@
       "dir": "frontend",
       "stack": "web-vite",
       "kind": "server",
-      "install": [["npm", "ci"]],
-      "build": [["npm", "run", "build"]],
-      "test": [["npm", "test"]],
+      "install": [
+        [
+          "npm",
+          "ci"
+        ]
+      ],
+      "build": [
+        [
+          "npm",
+          "run",
+          "build"
+        ]
+      ],
+      "test": [
+        [
+          "npm",
+          "test"
+        ]
+      ],
       "start": [
         "npm",
         "run",
@@ -23,11 +39,69 @@
       "port_env": "PORT",
       "health": {
         "path": "/",
-        "expect_status": [200]
+        "expect_status": [
+          200
+        ]
       },
       "env": {
         "VITE_API_BASE_URL": {
           "dev": "${service:api.origin}"
+        }
+      }
+    },
+    {
+      "name": "db",
+      "kind": "database",
+      "engine": "postgres"
+    },
+    {
+      "name": "api",
+      "dir": "backend",
+      "stack": "python",
+      "kind": "server",
+      "install": [
+        [
+          "${python}",
+          "-m",
+          "pip",
+          "install",
+          "-q",
+          "-r",
+          "requirements.txt"
+        ]
+      ],
+      "start": [
+        "${python}",
+        "-m",
+        "uvicorn",
+        "main:app",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "${PORT}"
+      ],
+      "port": 8000,
+      "port_env": "PORT",
+      "health": {
+        "path": "/api/health",
+        "expect_status": [
+          200
+        ]
+      },
+      "test": [
+        [
+          "${python}",
+          "-m",
+          "pytest",
+          "-q"
+        ]
+      ],
+      "env": {
+        "DATABASE_URL": {
+          "dev": "${service:db.url}"
+        },
+        "CORS_ORIGINS": {
+          "dev": "${service:web.origin}"
         }
       }
     }
