@@ -1,8 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import { Link } from "react-router-dom";
-import { apiFetch } from "../api/client";
+import { ApiError, apiFetch } from "../api/client";
 import type { Room } from "../types";
 import "./RoomsPage.css";
+
+const FOCUSABLE_SELECTOR =
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 function formatSeats(seats: number): string {
   return seats === 1 ? "1 Platz" : `${seats} Plätze`;
@@ -13,8 +23,8 @@ function ChairIcon() {
     <svg
       className="room-card__icon"
       viewBox="0 0 16 16"
-      width="14"
-      height="14"
+      width="16"
+      height="16"
       aria-hidden="true"
       focusable="false"
     >
@@ -41,6 +51,20 @@ export default function RoomsPage() {
   const [search, setSearch] = useState<string>("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [roomName, setRoomName] = useState<string>("");
+  const [roomSeats, setRoomSeats] = useState<string>("");
+  const [roomEquipment, setRoomEquipment] = useState<string[]>([]);
+  const [equipmentDraft, setEquipmentDraft] = useState<string>("");
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [submitted, setSubmitted] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [modalError, setModalError] = useState<string | null>(null);
+
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
   const loadRooms = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -62,6 +86,60 @@ export default function RoomsPage() {
   useEffect(() => {
     void loadRooms();
   }, [loadRooms]);
+
+  const resetForm = useCallback(() => {
+    setRoomName("");
+    setRoomSeats("");
+    setRoomEquipment([]);
+    setEquipmentDraft("");
+    setTouched({});
+    setSubmitted(false);
+    setSubmitting(false);
+    setModalError(null);
+  }, []);
+
+  const openModal = () => {
+    resetForm();
+    setModalOpen(true);
+  };
+
+  const closeModal = useCallback(() => {
+    setModalOpen(false);
+    triggerRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (modalOpen) {
+      nameInputRef.current?.focus();
+    }
+  }, [modalOpen]);
+
+  const handleDialogKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeModal();
+      return;
+    }
+    if (event.key !== "Tab" || dialogRef.current === null) {
+      return;
+    }
+    const focusable = Array.from(
+      dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+    );
+    if (focusable.length === 0) {
+      return;
+    }
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+    if (event.shiftKey && active === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
 
   const equipmentTags = useMemo<string[]>(() => {
     if (!rooms) {
@@ -117,9 +195,100 @@ export default function RoomsPage() {
     setSelectedTags([]);
   };
 
+  const validationErrors = useMemo(() => {
+    const next: { name?: string; seats?: string } = {};
+    if (roomName.trim().length === 0) {
+      next.name = "Bitte einen Raumnamen angeben.";
+    }
+    const seats = Number(roomSeats);
+    if (roomSeats.trim().length === 0 || !Number.isInteger(seats) || seats < 1) {
+      next.seats = "Bitte eine Platzanzahl von mindestens 1 angeben.";
+    }
+    return next;
+  }, [roomName, roomSeats]);
+
+  const visibleError = (field: "name" | "seats"): string | undefined => {
+    if (!submitted && !touched[field]) {
+      return undefined;
+    }
+    return validationErrors[field];
+  };
+
+  const addEquipmentTag = () => {
+    const value = equipmentDraft.trim();
+    if (value.length === 0) {
+      return;
+    }
+    setRoomEquipment((current) =>
+      current.some((tag) => normalize(tag) === normalize(value))
+        ? current
+        : [...current, value],
+    );
+    setEquipmentDraft("");
+  };
+
+  const removeEquipmentTag = (tag: string) => {
+    setRoomEquipment((current) => current.filter((item) => item !== tag));
+  };
+
+  const handleEquipmentKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter" || event.key === ",") {
+      event.preventDefault();
+      addEquipmentTag();
+    }
+  };
+
+  const handleCreateRoom = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ): Promise<void> => {
+    event.preventDefault();
+    setSubmitted(true);
+    setModalError(null);
+
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await apiFetch<Room>("/api/rooms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: roomName.trim(),
+          seats: Number(roomSeats),
+          equipment: roomEquipment,
+        }),
+      });
+      setModalOpen(false);
+      await loadRooms();
+      triggerRef.current?.focus();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setModalError(err.message);
+      } else {
+        setModalError(
+          "Der Raum konnte nicht angelegt werden. Bitte versuchen Sie es erneut.",
+        );
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <section className="page rooms-page">
-      <h1>Räume</h1>
+      <div className="rooms-page__head">
+        <h1>Räume</h1>
+        <button
+          type="button"
+          className="btn btn--primary"
+          onClick={openModal}
+          ref={triggerRef}
+        >
+          Raum anlegen
+        </button>
+      </div>
 
       {loading && (
         <div
@@ -266,6 +435,185 @@ export default function RoomsPage() {
             </ul>
           )}
         </>
+      )}
+
+      {modalOpen && (
+        <div
+          className="room-modal__overlay"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              closeModal();
+            }
+          }}
+        >
+          <div
+            className="room-modal__panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="room-modal-title"
+            ref={dialogRef}
+            onKeyDown={handleDialogKeyDown}
+          >
+            <div className="room-modal__header">
+              <h2 className="room-modal__title" id="room-modal-title">
+                Raum anlegen
+              </h2>
+              <button
+                type="button"
+                className="room-modal__close"
+                onClick={closeModal}
+                aria-label="Schließen"
+              >
+                ×
+              </button>
+            </div>
+
+            <form className="room-modal__form" onSubmit={handleCreateRoom} noValidate>
+              <p className="room-modal__required-note">
+                Mit * gekennzeichnete Felder sind Pflichtfelder.
+              </p>
+
+              {modalError !== null && (
+                <div className="notice notice--error" role="alert">
+                  {modalError}
+                </div>
+              )}
+
+              <div className="room-modal__body">
+                <div className="room-modal__field">
+                  <label className="room-modal__label" htmlFor="room-modal-name">
+                    Name <span className="room-modal__required">*</span>
+                  </label>
+                  <input
+                    id="room-modal-name"
+                    ref={nameInputRef}
+                    type="text"
+                    className={
+                      visibleError("name")
+                        ? "input room-modal__control--error"
+                        : "input"
+                    }
+                    value={roomName}
+                    placeholder="z. B. Konferenzraum"
+                    onChange={(event) => {
+                      setRoomName(event.target.value);
+                      setTouched((current) => ({ ...current, name: true }));
+                    }}
+                    onBlur={() =>
+                      setTouched((current) => ({ ...current, name: true }))
+                    }
+                    aria-invalid={visibleError("name") ? true : undefined}
+                    aria-describedby={
+                      visibleError("name") ? "room-modal-name-error" : undefined
+                    }
+                  />
+                  {visibleError("name") && (
+                    <p className="room-modal__error" id="room-modal-name-error">
+                      {visibleError("name")}
+                    </p>
+                  )}
+                </div>
+
+                <div className="room-modal__field">
+                  <label
+                    className="room-modal__label"
+                    htmlFor="room-modal-seats"
+                  >
+                    Plätze <span className="room-modal__required">*</span>
+                  </label>
+                  <input
+                    id="room-modal-seats"
+                    type="number"
+                    min={1}
+                    className={
+                      visibleError("seats")
+                        ? "input room-modal__control--error"
+                        : "input"
+                    }
+                    value={roomSeats}
+                    placeholder="z. B. 6"
+                    onChange={(event) => {
+                      setRoomSeats(event.target.value);
+                      setTouched((current) => ({ ...current, seats: true }));
+                    }}
+                    onBlur={() =>
+                      setTouched((current) => ({ ...current, seats: true }))
+                    }
+                    aria-invalid={visibleError("seats") ? true : undefined}
+                    aria-describedby={
+                      visibleError("seats") ? "room-modal-seats-error" : undefined
+                    }
+                  />
+                  {visibleError("seats") && (
+                    <p className="room-modal__error" id="room-modal-seats-error">
+                      {visibleError("seats")}
+                    </p>
+                  )}
+                </div>
+
+                <div className="room-modal__field">
+                  <label
+                    className="room-modal__label"
+                    htmlFor="room-modal-equipment"
+                  >
+                    Ausstattung
+                  </label>
+                  <input
+                    id="room-modal-equipment"
+                    type="text"
+                    className="input"
+                    value={equipmentDraft}
+                    placeholder="z. B. Beamer"
+                    onChange={(event) => setEquipmentDraft(event.target.value)}
+                    onKeyDown={handleEquipmentKeyDown}
+                    onBlur={addEquipmentTag}
+                    aria-describedby="room-modal-equipment-helper"
+                  />
+                  <p
+                    className="room-modal__helper"
+                    id="room-modal-equipment-helper"
+                  >
+                    Mit Enter oder Komma bestätigen.
+                  </p>
+                  {roomEquipment.length > 0 && (
+                    <div className="room-modal__tags">
+                      {roomEquipment.map((tag) => (
+                        <span className="room-modal__tag" key={tag}>
+                          {tag}
+                          <button
+                            type="button"
+                            className="room-modal__tag-remove"
+                            onClick={() => removeEquipmentTag(tag)}
+                            aria-label={`${tag} entfernen`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="room-modal__footer">
+                <button
+                  type="button"
+                  className="btn btn--ghost"
+                  onClick={closeModal}
+                >
+                  Abbrechen
+                </button>
+                <button
+                  type="submit"
+                  className="btn btn--primary"
+                  disabled={submitting}
+                >
+                  Speichern
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </section>
   );
