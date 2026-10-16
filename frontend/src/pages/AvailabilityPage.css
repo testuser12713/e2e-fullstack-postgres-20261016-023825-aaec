@@ -1,0 +1,175 @@
+.availability-intro {
+  color: var(--color-muted);
+  font-size: 15px;
+}
+
+.availability-form {
+  max-width: 720px;
+}
+
+.availability-form__note {
+  color: var(--color-muted);
+  font-size: 13px;
+  margin-bottom: var(--space-3);
+}
+
+.availability-form__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.availability-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0);
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.availability-form__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+.availability-form__error {
+  color: var(--color-danger);
+  font-size: 13px;
+}
+
+.availability-form__action {
+  display: flex;
+  align-items: flex-end;
+  flex: 0 0 auto;
+  align-self: flex-end;
+}
+
+.availability-hint {
+  color: var(--color-muted);
+  font-size: 15px;
+}
+
+.availability-loading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.availability-loading__text {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.availability-skeletons {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+.availability-skeleton {
+  height: 96px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface_alt);
+  animation: availability-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes availability-shimmer {
+  0%,
+  100% {
+    background-color: var(--color-surface_alt);
+  }
+  50% {
+    background-color: #e4e7ec;
+  }
+}
+
+.availability-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+.availability-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-height: 44px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-fg);
+  text-decoration: none;
+  transition: box-shadow 120ms ease-out;
+}
+
+.availability-card:hover {
+  box-shadow: 0 1px 2px var(--color-shadow_color);
+}
+
+.availability-card__name {
+  font-size: 17px;
+  font-weight: var(--heading_weight);
+}
+
+.availability-card__seats {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.availability-card__equipment {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.empty-state__title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-fg);
+}
+
+.empty-state__hint {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+@media (min-width: 720px) {
+  .availability-results,
+  .availability-skeletons {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+  }
+}
+
+@media (min-width: 1080px) {
+  .availability-results,
+  .availability-skeletons {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 479px) {
+  .availability-form__row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .availability-form__field {
+    flex: 1 1 auto;
+  }
+
+  .availability-form__action {
+    align-self: stretch;
+  }
+
+  .availability-form__submit {
+    width: 100%;
+  }
+}
