@@ -1,0 +1,231 @@
+.rooms-page {
+  gap: var(--space-3);
+}
+
+/* Filter bar — DESIGN.md §FilterBar */
+.rooms-filter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  position: sticky;
+  top: 56px;
+  z-index: 5;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-2) 0;
+}
+
+.rooms-filter__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.rooms-filter__label {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--color-muted);
+  padding: 0;
+}
+
+.rooms-filter__equipment {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.rooms-filter__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.rooms-chip {
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 120ms ease-out, border-color 120ms ease-out;
+}
+
+.rooms-chip:hover {
+  border-color: var(--color-border_strong);
+}
+
+.rooms-chip--active {
+  background: var(--color-accent_soft);
+  color: var(--color-accent_pressed);
+  border-color: #bfd2fb;
+}
+
+.rooms-chip__check {
+  font-weight: 600;
+}
+
+.rooms-filter__reset {
+  align-self: flex-start;
+}
+
+/* Loading skeleton — DESIGN.md §LoadingState */
+.rooms-loading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.rooms-loading__label {
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.room-card--skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  pointer-events: none;
+}
+
+.room-card__skeleton-line {
+  height: 14px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface_alt);
+  animation: rooms-shimmer 1.4s ease-in-out infinite;
+}
+
+.room-card__skeleton-line--title {
+  width: 60%;
+  height: 18px;
+}
+
+.room-card__skeleton-line--meta {
+  width: 40%;
+}
+
+.room-card__skeleton-line--tags {
+  width: 80%;
+}
+
+@keyframes rooms-shimmer {
+  0%,
+  100% {
+    background: var(--color-surface_alt);
+  }
+  50% {
+    background: #e4e7ec;
+  }
+}
+
+/* Room grid — DESIGN.md §RoomCard, 1/2/3-up */
+.rooms-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rooms-list__item {
+  display: flex;
+}
+
+.room-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  min-height: 44px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  color: var(--color-fg);
+  text-decoration: none;
+  transition: box-shadow 120ms ease-out, border-color 120ms ease-out;
+}
+
+.room-card:hover {
+  box-shadow: 0 1px 2px var(--color-shadow_color);
+  border-color: var(--color-border_strong);
+}
+
+.room-card__name {
+  font-size: 17px;
+  line-height: 24px;
+  font-weight: var(--heading_weight);
+}
+
+.room-card__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0);
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--color-muted);
+}
+
+.room-card__icon {
+  flex: none;
+}
+
+.room-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-0);
+}
+
+.empty-state__title {
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 500;
+  color: var(--color-fg);
+}
+
+.empty-state__hint {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--color-muted);
+}
+
+.rooms-retry {
+  margin-top: var(--space-2);
+}
+
+@media (min-width: 720px) {
+  .rooms-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+  }
+}
+
+@media (min-width: 768px) {
+  .rooms-filter {
+    top: 64px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--space-3) var(--space-4);
+  }
+
+  .rooms-filter__field {
+    flex: 0 1 280px;
+  }
+
+  .rooms-filter__equipment {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .rooms-filter__reset {
+    margin-left: auto;
+  }
+}
+
+@media (min-width: 1080px) {
+  .rooms-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
