@@ -2,6 +2,15 @@
   gap: var(--space-3);
 }
 
+/* Page head with the primary create action */
+.rooms-page__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+}
+
 /* Filter bar — DESIGN.md §FilterBar */
 .rooms-filter {
   display: flex;
@@ -168,6 +177,194 @@
 
 .room-card__icon {
   flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--color-muted);
+}
+
+/* Create-room modal — DESIGN.md §Modal (room create/edit) */
+.room-modal__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3);
+  background: var(--color-overlay);
+}
+
+.room-modal__panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: 0 8px 24px var(--color-shadow_color);
+}
+
+.room-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.room-modal__title {
+  font-size: 17px;
+  line-height: 24px;
+  font-weight: var(--heading_weight);
+}
+
+.room-modal__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 120ms ease-out, color 120ms ease-out;
+}
+
+.room-modal__close:hover {
+  background: var(--color-surface_alt);
+  color: var(--color-fg);
+}
+
+.room-modal__form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.room-modal__required-note {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--color-muted);
+  margin-bottom: var(--space-2);
+}
+
+.room-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  overflow-y: auto;
+  padding: var(--space-0) 0;
+  margin-top: var(--space-2);
+}
+
+.room-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.room-modal__label {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+.room-modal__required {
+  color: var(--color-danger);
+}
+
+.room-modal__control--error {
+  border-color: var(--color-danger);
+}
+
+.room-modal__error {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--color-danger);
+}
+
+.room-modal__helper {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--color-muted);
+}
+
+.room-modal__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-0);
+}
+
+.room-modal__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0);
+  min-height: 32px;
+  padding: var(--space-0) var(--space-1) var(--space-0) 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface_alt);
+  color: var(--color-fg);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.room-modal__tag-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 120ms ease-out, color 120ms ease-out;
+}
+
+.room-modal__tag-remove:hover {
+  background: var(--color-border);
+  color: var(--color-fg);
+}
+
+.room-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+@media (max-width: 479px) {
+  .rooms-page__head .btn {
+    width: 100%;
+  }
+
+  .room-modal__overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .room-modal__panel {
+    max-width: none;
+    max-height: 90vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  .room-modal__footer .btn {
+    flex: 1 1 auto;
+  }
 }
 
 .room-card__tags {
