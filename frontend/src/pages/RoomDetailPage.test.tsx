@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import RoomDetailPage from "./RoomDetailPage";
 import type { Booking, Room } from "../types";
@@ -86,9 +86,19 @@ describe("RoomDetailPage", () => {
         name: "Konferenz Nord",
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText("12 Plätze")).toBeInTheDocument();
+    const seats = screen.getByText("12 Plätze");
+    expect(seats).toBeInTheDocument();
+    expect(seats.querySelector("svg")).not.toBeNull();
     expect(screen.getByText("Beamer")).toBeInTheDocument();
     expect(screen.getByText("Whiteboard")).toBeInTheDocument();
+  });
+
+  it("renders the seat line for a single seat room", async () => {
+    installApi({}, { id: 3, name: "Mini", seats: 1, equipment: [] });
+    renderPage("3");
+
+    const seats = await screen.findByText("1 Platz");
+    expect(seats.querySelector("svg")).not.toBeNull();
   });
 
   it("loads the chosen day's bookings in chronological order", async () => {
@@ -116,7 +126,59 @@ describe("RoomDetailPage", () => {
     expect(screen.getByText("gebucht von: Berta")).toBeInTheDocument();
   });
 
-  it("shows a hint for a day without bookings", async () => {
+  it("shows the German day row with prev, date, next and Heute controls", async () => {
+    installApi({});
+    renderPage("3");
+
+    await screen.findByRole("heading", {
+      level: 1,
+      name: "Konferenz Nord",
+    });
+
+    const dayPicker = screen.getByRole("group", { name: "Tag auswählen" });
+    expect(
+      screen.getByRole("button", { name: "Vorheriger Tag" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Nächster Tag" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Heute" })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Datum"), {
+      target: { value: "2026-05-20" },
+    });
+
+    expect(within(dayPicker).getByText(/Mi, 20\.05\.2026/)).toBeInTheDocument();
+    expect(within(dayPicker).getByText("UTC")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Vorheriger Tag" }));
+    expect(within(dayPicker).getByText(/Di, 19\.05\.2026/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Nächster Tag" }));
+    expect(within(dayPicker).getByText(/Mi, 20\.05\.2026/)).toBeInTheDocument();
+  });
+
+  it("returns to today via the Heute control", async () => {
+    installApi({});
+    renderPage("3");
+
+    await screen.findByRole("heading", {
+      level: 1,
+      name: "Konferenz Nord",
+    });
+
+    fireEvent.change(screen.getByLabelText("Datum"), {
+      target: { value: "2026-05-20" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Heute" }));
+
+    const today = new Date().toISOString().slice(0, 10);
+    expect((screen.getByLabelText("Datum") as HTMLInputElement).value).toBe(
+      today,
+    );
+  });
+
+  it("shows a hint and a create-booking action for a day without bookings", async () => {
     installApi({});
     renderPage("3");
 
@@ -128,5 +190,8 @@ describe("RoomDetailPage", () => {
     expect(
       await screen.findByText("An diesem Tag ist der Raum frei."),
     ).toBeInTheDocument();
+
+    const link = await screen.findByRole("link", { name: "Buchung anlegen" });
+    expect(link).toHaveAttribute("href", "/bookings/new");
   });
 });

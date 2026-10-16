@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { ApiError, apiFetch } from "../api/client";
 import type { Booking, Room } from "../types";
 import "./RoomDetailPage.css";
@@ -52,6 +52,92 @@ function formatTime(iso: string): string {
 
 function formatSeats(seats: number): string {
   return seats === 1 ? "1 Platz" : `${seats} Plätze`;
+}
+
+function ChairIcon() {
+  return (
+    <svg
+      className="room-detail__chair-icon"
+      viewBox="0 0 16 16"
+      width="16"
+      height="16"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M4 2.5h8M5 2.5v5.5h6V2.5M4.5 8h7l1 5.5M5 13.5h6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+type DayPickerProps = {
+  value: string;
+  minDate?: string;
+  maxDate?: string;
+  onChange: (next: string) => void;
+};
+
+function DayPicker({ value, minDate, maxDate, onChange }: DayPickerProps) {
+  const atMinDate = minDate !== undefined && value <= minDate;
+  const atMaxDate = maxDate !== undefined && value >= maxDate;
+
+  return (
+    <div
+      className="room-detail__day-picker"
+      role="group"
+      aria-label="Tag auswählen"
+    >
+      <button
+        type="button"
+        className="btn btn--secondary room-detail__day-nav"
+        aria-label="Vorheriger Tag"
+        title={atMinDate ? "Frühester verfügbarer Tag" : undefined}
+        disabled={atMinDate}
+        onClick={() => onChange(shiftDate(value, -1))}
+      >
+        «
+      </button>
+      <label className="room-detail__date-field">
+        <span className="room-detail__date-display">
+          {formatDayLabel(value)} <span className="room-detail__utc">UTC</span>
+        </span>
+        <input
+          type="date"
+          className="room-detail__date-input numeric"
+          value={value}
+          aria-label="Datum"
+          onChange={(event) => {
+            if (event.target.value) {
+              onChange(event.target.value);
+            }
+          }}
+        />
+      </label>
+      <button
+        type="button"
+        className="btn btn--secondary room-detail__day-nav"
+        aria-label="Nächster Tag"
+        title={atMaxDate ? "Letzter verfügbarer Tag" : undefined}
+        disabled={atMaxDate}
+        onClick={() => onChange(shiftDate(value, 1))}
+      >
+        »
+      </button>
+      <button
+        type="button"
+        className="btn btn--ghost"
+        onClick={() => onChange(todayIso())}
+      >
+        Heute
+      </button>
+    </div>
+  );
 }
 
 export default function RoomDetailPage() {
@@ -119,9 +205,7 @@ export default function RoomDetailPage() {
     setBookingsLoading(true);
     setBookingsError(null);
 
-    apiFetch<Booking[]>(
-      `/api/rooms/${numericRoomId}/bookings?date=${date}`,
-    )
+    apiFetch<Booking[]>(`/api/rooms/${numericRoomId}/bookings?date=${date}`)
       .then((data) => {
         if (!active) {
           return;
@@ -166,7 +250,10 @@ export default function RoomDetailPage() {
       ) : (
         <header className="card room-detail__header">
           <h1>{room.name}</h1>
-          <p className="room-detail__seats numeric">{formatSeats(room.seats)}</p>
+          <p className="room-detail__seats numeric">
+            <ChairIcon />
+            {formatSeats(room.seats)}
+          </p>
           {room.equipment.length > 0 && (
             <ul className="room-detail__equipment">
               {room.equipment.map((tag) => (
@@ -179,48 +266,7 @@ export default function RoomDetailPage() {
         </header>
       )}
 
-      <div className="room-detail__day-picker">
-        <button
-          type="button"
-          className="btn btn--secondary room-detail__day-nav"
-          aria-label="Vorheriger Tag"
-          onClick={() => setDate((current) => shiftDate(current, -1))}
-        >
-          «
-        </button>
-        <label className="room-detail__date-field">
-          <span className="room-detail__date-label">
-            {formatDayLabel(date)}{" "}
-            <span className="room-detail__utc">UTC</span>
-          </span>
-          <input
-            type="date"
-            className="input room-detail__date-input numeric"
-            value={date}
-            aria-label="Datum"
-            onChange={(event) => {
-              if (event.target.value) {
-                setDate(event.target.value);
-              }
-            }}
-          />
-        </label>
-        <button
-          type="button"
-          className="btn btn--secondary room-detail__day-nav"
-          aria-label="Nächster Tag"
-          onClick={() => setDate((current) => shiftDate(current, 1))}
-        >
-          »
-        </button>
-        <button
-          type="button"
-          className="btn btn--ghost"
-          onClick={() => setDate(todayIso())}
-        >
-          Heute
-        </button>
-      </div>
+      <DayPicker value={date} onChange={setDate} />
 
       <div className="card room-detail__timeline">
         <h2 className="room-detail__timeline-title">
@@ -257,6 +303,12 @@ export default function RoomDetailPage() {
             <p className="empty-state__hint">
               Wähle einen anderen Tag oder lege eine neue Buchung an.
             </p>
+            <Link
+              className="btn btn--primary empty-state__action"
+              to="/bookings/new"
+            >
+              Buchung anlegen
+            </Link>
           </div>
         ) : (
           <ul className="room-detail__booking-list">
