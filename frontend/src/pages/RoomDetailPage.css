@@ -9,9 +9,17 @@
 }
 
 .room-detail__seats {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0);
   color: var(--color-muted);
   font-size: 13px;
   line-height: 18px;
+}
+
+.room-detail__chair-icon {
+  flex: none;
+  color: var(--color-muted);
 }
 
 .room-detail__equipment {
@@ -26,7 +34,7 @@
 .room-detail__day-picker {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   gap: var(--space-1);
 }
 
@@ -38,18 +46,30 @@
 }
 
 .room-detail__date-field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-0);
-  flex: 1 1 160px;
-  min-width: 0;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
 }
 
-.room-detail__date-label {
-  font-size: 13px;
+.room-detail__date-field:hover {
+  border-color: var(--color-border_strong);
+}
+
+.room-detail__date-field:focus-within {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-focus_ring);
+}
+
+.room-detail__date-display {
+  font-size: 15px;
   font-weight: 500;
-  color: var(--color-muted);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .room-detail__utc {
@@ -57,7 +77,21 @@
 }
 
 .room-detail__date-input {
+  position: absolute;
+  inset: 0;
   width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.empty-state__action {
+  align-self: center;
+  margin-top: var(--space-1);
 }
 
 .room-detail__timeline {
