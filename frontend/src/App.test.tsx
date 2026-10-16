@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
@@ -11,6 +11,10 @@ function renderApp(initialPath = "/") {
     </MemoryRouter>,
   );
 }
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("App shell", () => {
   it("renders the shell with its navigation", () => {
@@ -56,13 +60,30 @@ describe("App shell", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders the room detail route", () => {
+  it("renders the room detail route", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input);
+        const body = url.includes("/bookings")
+          ? []
+          : { id: 5, name: "Besprechungsraum", seats: 4, equipment: [] };
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => body,
+        } as unknown as Response);
+      }),
+    );
+
     renderApp("/rooms/5");
 
     expect(
-      screen.getByRole("heading", { level: 1, name: "Raumdetails" }),
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Besprechungsraum",
+      }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/des Raums 5/)).toBeInTheDocument();
   });
 
   it("renders the new booking route with the booking form", () => {
