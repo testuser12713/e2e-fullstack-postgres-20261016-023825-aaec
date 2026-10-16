@@ -28,6 +28,14 @@
   min-width: 0;
 }
 
+.availability-form__field--period {
+  flex: 1 1 360px;
+}
+
+.availability-form__field--seats {
+  flex: 0 1 180px;
+}
+
 .availability-form__label {
   font-size: 13px;
   font-weight: 500;
@@ -39,11 +47,10 @@
   font-size: 13px;
 }
 
-.availability-form__action {
+.availability-form__actions {
   display: flex;
-  align-items: flex-end;
-  flex: 0 0 auto;
-  align-self: flex-end;
+  justify-content: flex-end;
+  margin-top: var(--space-3);
 }
 
 .availability-hint {
@@ -161,12 +168,14 @@
     align-items: stretch;
   }
 
-  .availability-form__field {
+  .availability-form__field,
+  .availability-form__field--period,
+  .availability-form__field--seats {
     flex: 1 1 auto;
   }
 
-  .availability-form__action {
-    align-self: stretch;
+  .availability-form__actions {
+    justify-content: flex-end;
   }
 
   .availability-form__submit {

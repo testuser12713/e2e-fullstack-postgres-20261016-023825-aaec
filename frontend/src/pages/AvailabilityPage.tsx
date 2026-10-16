@@ -1,10 +1,12 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch, ApiError } from "../api/client";
+import DateTimeField from "../components/DateTimeField";
 import type { Room } from "../types";
 import "./AvailabilityPage.css";
 
 type FieldErrors = {
+  date?: string;
   start?: string;
   end?: string;
   seats?: string;
@@ -16,12 +18,11 @@ type SearchState =
   | { status: "success"; rooms: Room[] }
   | { status: "error"; message: string };
 
-function toUtcIso(value: string): string {
-  if (value.length === 0) {
+function buildUtcIso(date: string, time: string): string {
+  if (date.length === 0 || time.length === 0) {
     return "";
   }
-  const withSeconds = value.length === 16 ? `${value}:00` : value;
-  return `${withSeconds}Z`;
+  return `${date}T${time}:00Z`;
 }
 
 function seatLabel(seats: number): string {
@@ -29,28 +30,33 @@ function seatLabel(seats: number): string {
 }
 
 export default function AvailabilityPage() {
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
+  const [date, setDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [seats, setSeats] = useState("1");
   const [touched, setTouched] = useState<{
+    date: boolean;
     start: boolean;
     end: boolean;
     seats: boolean;
-  }>({ start: false, end: false, seats: false });
+  }>({ date: false, start: false, end: false, seats: false });
   const [submitted, setSubmitted] = useState(false);
   const [state, setState] = useState<SearchState>({ status: "idle" });
 
   const validation = useMemo<FieldErrors>(() => {
     const errors: FieldErrors = {};
-    if (start.length === 0) {
+    if (date.length === 0) {
+      errors.date = "Bitte ein Datum angeben.";
+    }
+    if (startTime.length === 0) {
       errors.start = "Bitte einen Beginn angeben.";
     }
-    if (end.length === 0) {
+    if (endTime.length === 0) {
       errors.end = "Bitte ein Ende angeben.";
-    } else if (start.length > 0) {
-      const startTime = new Date(toUtcIso(start)).getTime();
-      const endTime = new Date(toUtcIso(end)).getTime();
-      if (endTime <= startTime) {
+    } else if (date.length > 0 && startTime.length > 0) {
+      const startMs = Date.parse(buildUtcIso(date, startTime));
+      const endMs = Date.parse(buildUtcIso(date, endTime));
+      if (endMs <= startMs) {
         errors.end = "Das Ende muss nach dem Beginn liegen.";
       }
     }
@@ -64,7 +70,7 @@ export default function AvailabilityPage() {
     }
 
     return errors;
-  }, [start, end, seats]);
+  }, [date, startTime, endTime, seats]);
 
   function errorFor(field: keyof FieldErrors): string | undefined {
     if (!submitted && !touched[field]) {
@@ -75,8 +81,8 @@ export default function AvailabilityPage() {
 
   async function runSearch(): Promise<void> {
     const params = new URLSearchParams({
-      start: toUtcIso(start),
-      end: toUtcIso(end),
+      start: buildUtcIso(date, startTime),
+      end: buildUtcIso(date, endTime),
       min_seats: String(Number(seats.trim())),
     });
 
@@ -105,6 +111,7 @@ export default function AvailabilityPage() {
     void runSearch();
   }
 
+  const dateError = errorFor("date");
   const startError = errorFor("start");
   const endError = errorFor("end");
   const seatsError = errorFor("seats");
@@ -130,63 +137,25 @@ export default function AvailabilityPage() {
         </p>
 
         <div className="availability-form__row">
-          <div className="availability-form__field">
-            <label className="availability-form__label" htmlFor="availability-start">
-              Beginn <span aria-hidden="true">*</span>
-            </label>
-            <input
-              id="availability-start"
-              className="input numeric"
-              type="datetime-local"
-              value={start}
-              onChange={(event) => setStart(event.target.value)}
-              onBlur={() =>
-                setTouched((prev) => ({ ...prev, start: true }))
+          <div className="availability-form__field availability-form__field--period">
+            <DateTimeField
+              id="availability-period"
+              date={date}
+              startTime={startTime}
+              endTime={endTime}
+              onDateChange={setDate}
+              onStartTimeChange={setStartTime}
+              onEndTimeChange={setEndTime}
+              onBlur={(field) =>
+                setTouched((prev) => ({ ...prev, [field]: true }))
               }
-              aria-invalid={startError ? true : undefined}
-              aria-describedby={
-                startError ? "availability-start-error" : undefined
-              }
+              dateError={dateError}
+              startError={startError}
+              endError={endError}
             />
-            {startError ? (
-              <p
-                id="availability-start-error"
-                className="availability-form__error"
-                role="alert"
-              >
-                {startError}
-              </p>
-            ) : null}
           </div>
 
-          <div className="availability-form__field">
-            <label className="availability-form__label" htmlFor="availability-end">
-              Ende <span aria-hidden="true">*</span>
-            </label>
-            <input
-              id="availability-end"
-              className="input numeric"
-              type="datetime-local"
-              value={end}
-              onChange={(event) => setEnd(event.target.value)}
-              onBlur={() => setTouched((prev) => ({ ...prev, end: true }))}
-              aria-invalid={endError ? true : undefined}
-              aria-describedby={
-                endError ? "availability-end-error" : undefined
-              }
-            />
-            {endError ? (
-              <p
-                id="availability-end-error"
-                className="availability-form__error"
-                role="alert"
-              >
-                {endError}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="availability-form__field">
+          <div className="availability-form__field availability-form__field--seats">
             <label className="availability-form__label" htmlFor="availability-seats">
               Mindestplätze <span aria-hidden="true">*</span>
             </label>
@@ -215,16 +184,16 @@ export default function AvailabilityPage() {
               </p>
             ) : null}
           </div>
+        </div>
 
-          <div className="availability-form__action">
-            <button
-              type="submit"
-              className="btn btn--primary availability-form__submit"
-              disabled={isLoading}
-            >
-              {isLoading ? "Suche läuft …" : "Freie Räume suchen"}
-            </button>
-          </div>
+        <div className="availability-form__actions">
+          <button
+            type="submit"
+            className="btn btn--primary availability-form__submit"
+            disabled={isLoading}
+          >
+            {isLoading ? "Suche läuft …" : "Freie Räume suchen"}
+          </button>
         </div>
       </form>
 

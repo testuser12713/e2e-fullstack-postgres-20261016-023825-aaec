@@ -1,0 +1,69 @@
+.datetime-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.datetime-field__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-0) var(--space-2);
+}
+
+.datetime-field__control {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0);
+  min-width: 0;
+  flex: 1 1 120px;
+}
+
+.datetime-field__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+.datetime-field__input {
+  min-width: 0;
+}
+
+.datetime-field__input--error,
+.datetime-field__input--error:hover {
+  border-color: var(--color-danger);
+}
+
+.datetime-field__error {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--color-danger);
+}
+
+.datetime-field__duration {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.datetime-field__duration--over {
+  color: var(--color-danger);
+}
+
+.datetime-field__hint {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--color-muted);
+}
+
+@media (max-width: 479px) {
+  .datetime-field__row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .datetime-field__control {
+    flex: 1 1 auto;
+  }
+}
